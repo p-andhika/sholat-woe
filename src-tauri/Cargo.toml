@@ -1,6 +1,6 @@
 [package]
 name = "sholat-woe"
-version = "1.0.0"
+version = "1.0.1"
 description = "Sholat reminder"
 authors = ["Andhika Prakasiwi"]
 edition = "2021"
