@@ -34,7 +34,7 @@ pub fn create_tray<R: Runtime>(app: &tauri::App<R>) -> tauri::Result<()> {
     {
         unsafe {
             let ns_window = window.ns_window().unwrap() as id;
-            ns_window.setOpaque_(false);
+            ns_window.setOpaque_(0i8);
             ns_window.setBackgroundColor_(cocoa::appkit::NSColor::clearColor(cocoa::base::nil));
 
             let content_view: id = ns_window.contentView();
