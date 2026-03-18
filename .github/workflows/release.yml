@@ -72,6 +72,10 @@ jobs:
             - **Apple Silicon (M1/M2/M3)**: Download `Sholat-Woe_*_aarch64.dmg`
             - **Intel**: Download `Sholat-Woe_*_x64.dmg`
             - Open the DMG and drag to Applications
+            - **Important**: macOS will block the app. Run this command to allow it:
+              ```bash
+              xattr -cr "/Applications/Sholat Woe.app"
+              ```
 
             ### Windows
             - Download `Sholat-Woe_*_x64-setup.exe`
@@ -81,9 +85,9 @@ jobs:
             - Download `sholat-woe_*_amd64.AppImage` (portable, no install needed)
             - Or use `.deb` package for Debian/Ubuntu
 
-            ## Verification
+            ## Note
 
-            Binaries are signed and notarized (macOS) or checksum-verified.
+            macOS builds are currently unsigned. Code signing will be added in a future release.
 
           releaseDraft: true
           prerelease: false
