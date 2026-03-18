@@ -232,6 +232,11 @@ pub async fn fetch_prayer_times(config: &PrayerConfig) -> Result<PrayerTimesResu
             .unwrap_or("--:--")
             .to_string();
         time_remaining = "tomorrow".to_string();
+
+        // Mark Fajr as next prayer
+        if let Some(fajr) = prayers.iter_mut().find(|p| p.name == "Fajr") {
+            fajr.is_next = true;
+        }
     }
 
     let hijri = &today_data.date.hijri;

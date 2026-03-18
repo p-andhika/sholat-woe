@@ -103,8 +103,9 @@
       const prayerMinutes = h * 60 + m;
       const diff = prayerMinutes - currentMinutes;
 
+      // Advance notification (trigger within 1-minute window before target)
       const advKey = `${prayer.name}_adv_${nowTime.toDateString()}`;
-      if (diff === $config.notify_before_mins && !notifiedPrayers.has(advKey)) {
+      if (diff <= $config.notify_before_mins && diff > $config.notify_before_mins - 1 && !notifiedPrayers.has(advKey)) {
         sendNotification({
           title: `${prayer.name} in ${$config.notify_before_mins} min`,
           body: `${prayer.name} prayer at ${prayer.time}. Prepare for salah.`,
@@ -113,10 +114,9 @@
         notifiedPrayers.add(advKey);
       }
 
+      // Exact time notification (trigger within 1-minute window after prayer time)
       const exactKey = `${prayer.name}_exact_${nowTime.toDateString()}`;
-      // Only trigger if prayer JUST passed (within last 30 seconds, since we check every 30s)
-      // This prevents triggering on prayers that passed hours ago
-      if (diff <= 0 && diff >= -1 && !notifiedPrayers.has(exactKey)) {
+      if (diff <= 0 && diff > -1 && !notifiedPrayers.has(exactKey)) {
         sendNotification({
           title: `${prayer.name} Time`,
           body: `It's time for ${prayer.name} prayer. Allahu Akbar!`,
@@ -154,13 +154,22 @@
       now = new Date();
     }, 1000);
 
-    const notifInterval = setInterval(checkAndNotify, 30_000);
+    const notifInterval = setInterval(checkAndNotify, 10_000);
     const refreshInterval = setInterval(loadPrayerTimes, 3_600_000);
+
+    // Handle system wake/sleep - refresh data when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadPrayerTimes();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       clearInterval(clockInterval);
       clearInterval(notifInterval);
       clearInterval(refreshInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       unlisten.then((fn) => fn());
       unlistenSettings.then((fn) => fn());
     };

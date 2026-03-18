@@ -61,9 +61,9 @@
       const prayerMinutes = h * 60 + m;
       const diff = prayerMinutes - currentMinutes;
 
-      // Advance notification
+      // Advance notification (trigger within 1-minute window before target)
       const advKey = `${prayer.name}_adv_${nowTime.toDateString()}`;
-      if (diff === $config.notify_before_mins && !notifiedPrayers.has(advKey)) {
+      if (diff <= $config.notify_before_mins && diff > $config.notify_before_mins - 1 && !notifiedPrayers.has(advKey)) {
         sendNotification({
           title: `🕌 ${prayer.name} in ${$config.notify_before_mins} min`,
           body: `${prayer.name} prayer at ${prayer.time}. Prepare for salah.`,
@@ -71,9 +71,9 @@
         notifiedPrayers.add(advKey);
       }
 
-      // Exact time notification
+      // Exact time notification (trigger within 1-minute window after prayer time)
       const exactKey = `${prayer.name}_exact_${nowTime.toDateString()}`;
-      if (diff === 0 && !notifiedPrayers.has(exactKey)) {
+      if (diff <= 0 && diff > -1 && !notifiedPrayers.has(exactKey)) {
         sendNotification({
           title: `🕌 ${prayer.name} Time`,
           body: `It's time for ${prayer.name} prayer. Allahu Akbar!`,
@@ -95,8 +95,8 @@
       now = new Date();
     }, 1000);
 
-    // Check notifications every 30 seconds
-    const notifInterval = setInterval(checkAndNotify, 30_000);
+    // Check notifications every 10 seconds
+    const notifInterval = setInterval(checkAndNotify, 10_000);
 
     // Refresh prayer times every hour
     const refreshInterval = setInterval(loadPrayerTimes, 3_600_000);
