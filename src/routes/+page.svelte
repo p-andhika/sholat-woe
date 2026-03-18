@@ -96,6 +96,7 @@
 
     const nowTime = new Date();
     const currentMinutes = nowTime.getHours() * 60 + nowTime.getMinutes();
+    let prayerJustPassed = false;
 
     for (const prayer of $prayerData.prayers) {
       const [h, m] = prayer.time.split(":").map(Number);
@@ -113,14 +114,22 @@
       }
 
       const exactKey = `${prayer.name}_exact_${nowTime.toDateString()}`;
-      if (diff === 0 && !notifiedPrayers.has(exactKey)) {
+      // Only trigger if prayer JUST passed (within last 30 seconds, since we check every 30s)
+      // This prevents triggering on prayers that passed hours ago
+      if (diff <= 0 && diff >= -1 && !notifiedPrayers.has(exactKey)) {
         sendNotification({
           title: `${prayer.name} Time`,
           body: `It's time for ${prayer.name} prayer. Allahu Akbar!`,
         });
         invoke("play_sound", { soundName: "Glass" });
         notifiedPrayers.add(exactKey);
+        prayerJustPassed = true;
       }
+    }
+
+    // When a prayer time passes, refresh data to update next prayer
+    if (prayerJustPassed) {
+      loadPrayerTimes();
     }
   }
 
@@ -262,7 +271,9 @@
       <div class="top-bar-right">
         <div class="location-pill">
           <MapPin size={11} weight="fill" />
-          <span class="location-text">{$config.city.toUpperCase()}, {$config.country}</span>
+          <span class="location-text"
+            >{$config.city.toUpperCase()}, {$config.country}</span
+          >
         </div>
       </div>
     </div>
