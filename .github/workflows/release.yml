@@ -6,7 +6,72 @@ on:
       - 'v*'
 
 jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog entry
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          DATE=$(date -u +%Y-%m-%d)
+
+          # Find the previous tag
+          PREV_TAG=$(git tag --sort=-v:refname | grep -A1 "^${TAG}$" | tail -1)
+          if [ "$PREV_TAG" = "$TAG" ]; then
+            RANGE=$(git rev-list --max-parents=0 HEAD)..${TAG}
+          else
+            RANGE="${PREV_TAG}..${TAG}"
+          fi
+
+          # Collect commits by type
+          FEATS=$(git log "$RANGE" --oneline --grep="^feat" --format="- %s" | sed 's/^- feat: /- /' | sed 's/^- feat(/- (/')
+          FIXES=$(git log "$RANGE" --oneline --grep="^fix" --format="- %s" | sed 's/^- fix: /- /' | sed 's/^- fix(/- (/')
+          OTHERS=$(git log "$RANGE" --oneline --grep="^refactor\|^perf\|^docs" --format="- %s" | sed 's/^- [a-z]*: /- /' | sed 's/^- [a-z]*(/- (/')
+
+          # Build the new section
+          SECTION="## [${VERSION}] - ${DATE}"
+          if [ -n "$FEATS" ]; then
+            SECTION="${SECTION}\n\n### Added\n\n${FEATS}"
+          fi
+          if [ -n "$FIXES" ]; then
+            SECTION="${SECTION}\n\n### Fixed\n\n${FIXES}"
+          fi
+          if [ -n "$OTHERS" ]; then
+            SECTION="${SECTION}\n\n### Changed\n\n${OTHERS}"
+          fi
+
+          # Insert after the header line in CHANGELOG.md
+          if grep -q "## \[${VERSION}\]" CHANGELOG.md; then
+            echo "Changelog entry for ${VERSION} already exists, skipping."
+          else
+            sed -i "/^# Changelog/,/^## \[/ {
+              /^## \[/ i\\
+$(echo -e "$SECTION" | sed 's/$/\\/')
+
+            }" CHANGELOG.md
+          fi
+
+      - name: Commit and push changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "No changelog changes to commit."
+          else
+            git commit -m "docs: update CHANGELOG.md for ${GITHUB_REF_NAME}"
+            git push origin HEAD:main
+          fi
+
   build:
+    needs: update-changelog
     permissions:
       contents: write
     strategy:
@@ -64,7 +129,7 @@ jobs:
           releaseBody: |
             ## What's New
 
-            See [CHANGELOG.md](CHANGELOG.md) for details.
+            See [CHANGELOG.md](https://github.com/p-andhika/sholat-woe/blob/main/CHANGELOG.md) for details.
 
             ## Installation
 
