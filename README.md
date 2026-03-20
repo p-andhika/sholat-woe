@@ -35,7 +35,7 @@ _Screenshots coming soon_
 
 ````bash
 # Clone the repository
-git clone https://github.com/yourusername/sholat-woe.git
+git clone https://github.com/p-andhika/sholat-woe.git
 cd sholat-woe
 
 # Install dependencies
@@ -44,11 +44,7 @@ npm install
 # Run development server
 npm run tauri dev
 
-# Build from Source
-
-### Build for Current Platform
-
-```bash
+# Build for current platform
 npm run tauri build
 ````
 
@@ -64,51 +60,16 @@ Output will be in `src-tauri/target/release/bundle/`:
 
 **Option A: GitHub Actions (Recommended)**
 
-Set up automated builds on every release:
-
-1. Create `.github/workflows/release.yml`:
-
-```yaml
-name: Release
-
-on:
-  push:
-    tags:
-      - "v*"
-
-jobs:
-  build:
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - uses: dtolnay/rust-action@stable
-      - run: npm install
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Sholat Woe ${{ github.ref_name }}"
-          releaseBody: "See the assets to download and install this version."
-          releaseDraft: true
-          prerelease: false
-```
-
-2. Push a tag to trigger release:
+Automated builds run on every tag push via the [release workflow](.github/workflows/release.yml). It also auto-generates changelog entries from commit history.
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+# Release a new version (bumps package.json, tauri.conf.json, Cargo.toml)
+npm run release:patch   # 1.0.2 → 1.0.3
+npm run release:minor   # 1.0.2 → 1.1.0
+npm run release:major   # 1.0.2 → 2.0.0
 ```
+
+This bumps the version in all files, commits, tags, and pushes — triggering the release workflow automatically.
 
 **Option B: Manual Cross-compilation**
 
@@ -181,12 +142,15 @@ sholat-woe/
 ### Available Scripts
 
 ```bash
-npm run dev          # Start Vite dev server
-npm run build        # Build frontend
-npm run preview      # Preview built frontend
-npm run check        # Run Svelte type checking
-npm run tauri dev    # Run Tauri dev (hot reload)
-npm run tauri build  # Build desktop app
+npm run dev            # Start Vite dev server
+npm run build          # Build frontend
+npm run preview        # Preview built frontend
+npm run check          # Run Svelte type checking
+npm run tauri dev      # Run Tauri dev (hot reload)
+npm run tauri build    # Build desktop app
+npm run release:patch  # Bump patch version & release
+npm run release:minor  # Bump minor version & release
+npm run release:major  # Bump major version & release
 ```
 
 ## 📦 Attribution & Credits
