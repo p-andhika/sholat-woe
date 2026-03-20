@@ -22,15 +22,20 @@ jobs:
           VERSION="${TAG#v}"
           DATE=$(date -u +%Y-%m-%d)
 
+          # Switch to a branch based on origin/main so CHANGELOG.md is up-to-date
+          # and our commit will be fast-forwardable to main
+          git fetch origin main
+          git checkout -b changelog-update origin/main
+
           # Find the previous tag
           PREV_TAG=$(git tag --sort=-v:refname | grep -A1 "^${TAG}$" | tail -1)
-          if [ "$PREV_TAG" = "$TAG" ]; then
+          if [ "$PREV_TAG" = "$TAG" ] || [ -z "$PREV_TAG" ]; then
             RANGE=$(git rev-list --max-parents=0 HEAD)..${TAG}
           else
             RANGE="${PREV_TAG}..${TAG}"
           fi
 
-          # Skip if entry already exists
+          # Skip if entry already exists (checks the real latest CHANGELOG.md from main)
           if grep -q "## \[${VERSION}\]" CHANGELOG.md; then
             echo "Changelog entry for ${VERSION} already exists, skipping."
             exit 0
@@ -82,9 +87,7 @@ jobs:
             echo "No changelog changes to commit."
           else
             git commit -m "docs: update CHANGELOG.md for ${GITHUB_REF_NAME}"
-            git fetch origin main
-            git rebase origin/main
-            git push origin HEAD:main
+            git push origin changelog-update:main
           fi
 
   build:
