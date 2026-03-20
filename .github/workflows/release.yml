@@ -30,33 +30,48 @@ jobs:
             RANGE="${PREV_TAG}..${TAG}"
           fi
 
-          # Collect commits by type
-          FEATS=$(git log "$RANGE" --oneline --grep="^feat" --format="- %s" | sed 's/^- feat: /- /' | sed 's/^- feat(/- (/')
-          FIXES=$(git log "$RANGE" --oneline --grep="^fix" --format="- %s" | sed 's/^- fix: /- /' | sed 's/^- fix(/- (/')
-          OTHERS=$(git log "$RANGE" --oneline --grep="^refactor\|^perf\|^docs" --format="- %s" | sed 's/^- [a-z]*: /- /' | sed 's/^- [a-z]*(/- (/')
-
-          # Build the new section
-          SECTION="## [${VERSION}] - ${DATE}"
-          if [ -n "$FEATS" ]; then
-            SECTION="${SECTION}\n\n### Added\n\n${FEATS}"
-          fi
-          if [ -n "$FIXES" ]; then
-            SECTION="${SECTION}\n\n### Fixed\n\n${FIXES}"
-          fi
-          if [ -n "$OTHERS" ]; then
-            SECTION="${SECTION}\n\n### Changed\n\n${OTHERS}"
-          fi
-
-          # Insert after the header line in CHANGELOG.md
+          # Skip if entry already exists
           if grep -q "## \[${VERSION}\]" CHANGELOG.md; then
             echo "Changelog entry for ${VERSION} already exists, skipping."
-          else
-            sed -i "/^# Changelog/,/^## \[/ {
-              /^## \[/ i\\
-$(echo -e "$SECTION" | sed 's/$/\\/')
-
-            }" CHANGELOG.md
+            exit 0
           fi
+
+          # Build new section into a temp file
+          TMPFILE=$(mktemp)
+          echo "## [${VERSION}] - ${DATE}" >> "$TMPFILE"
+
+          FEATS=$(git log "$RANGE" --oneline --grep="^feat" --format="- %s" | sed 's/^- feat: /- /' | sed 's/^- feat(/- (/')
+          if [ -n "$FEATS" ]; then
+            echo "" >> "$TMPFILE"
+            echo "### Added" >> "$TMPFILE"
+            echo "" >> "$TMPFILE"
+            echo "$FEATS" >> "$TMPFILE"
+          fi
+
+          FIXES=$(git log "$RANGE" --oneline --grep="^fix" --format="- %s" | sed 's/^- fix: /- /' | sed 's/^- fix(/- (/')
+          if [ -n "$FIXES" ]; then
+            echo "" >> "$TMPFILE"
+            echo "### Fixed" >> "$TMPFILE"
+            echo "" >> "$TMPFILE"
+            echo "$FIXES" >> "$TMPFILE"
+          fi
+
+          OTHERS=$(git log "$RANGE" --oneline --grep="^refactor\|^perf" --format="- %s" | sed 's/^- [a-z]*: /- /')
+          if [ -n "$OTHERS" ]; then
+            echo "" >> "$TMPFILE"
+            echo "### Changed" >> "$TMPFILE"
+            echo "" >> "$TMPFILE"
+            echo "$OTHERS" >> "$TMPFILE"
+          fi
+
+          echo "" >> "$TMPFILE"
+
+          # Insert after "# Changelog" header + blank line
+          head -3 CHANGELOG.md > CHANGELOG.new.md
+          cat "$TMPFILE" >> CHANGELOG.new.md
+          tail -n +4 CHANGELOG.md >> CHANGELOG.new.md
+          mv CHANGELOG.new.md CHANGELOG.md
+          rm "$TMPFILE"
 
       - name: Commit and push changelog
         run: |
