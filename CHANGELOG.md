@@ -1,6 +1,17 @@
 # Changelog
 
 All notable changes to Sholat Woe will be documented in this file.
+## [1.1.0] - 2026-03-20
+
+### Added
+
+- add automated version bump and release scripts
+- display app version in UI for better visibility
+
+### Fixed
+
+- rewrite changelog generation to avoid YAML parsing errors
+
 
 ## [1.0.2] - 2026-03-18
 
