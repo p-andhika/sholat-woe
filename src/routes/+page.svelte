@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { getVersion } from "@tauri-apps/api/app";
   import { listen } from "@tauri-apps/api/event";
   import {
     isPermissionGranted,
@@ -30,6 +31,7 @@
   } from "phosphor-svelte";
 
   let now = $state(new Date());
+  let appVersion = $state("");
   let notifiedPrayers: Set<string> = new Set();
   let shouldAnimate = $state(true);
 
@@ -105,7 +107,11 @@
 
       // Advance notification (trigger within 1-minute window before target)
       const advKey = `${prayer.name}_adv_${nowTime.toDateString()}`;
-      if (diff <= $config.notify_before_mins && diff > $config.notify_before_mins - 1 && !notifiedPrayers.has(advKey)) {
+      if (
+        diff <= $config.notify_before_mins &&
+        diff > $config.notify_before_mins - 1 &&
+        !notifiedPrayers.has(advKey)
+      ) {
         sendNotification({
           title: `${prayer.name} in ${$config.notify_before_mins} min`,
           body: `${prayer.name} prayer at ${prayer.time}. Prepare for salah.`,
@@ -134,6 +140,7 @@
   }
 
   onMount(() => {
+    getVersion().then((v) => (appVersion = v));
     const unlisten = listen("window-shown", () => {
       shouldAnimate = false;
       requestAnimationFrame(() => {
@@ -321,6 +328,9 @@
           </div>
         </div>
       {/each}
+      {#if appVersion}
+        <div class="version-cell">v{appVersion}</div>
+      {/if}
     {/if}
   </section>
 
@@ -585,5 +595,17 @@
     border: none;
     font-weight: 600;
     cursor: pointer;
+  }
+
+  .version-cell {
+    background: #0a0a0a;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 18px;
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: rgb(168, 85, 247);
+    letter-spacing: 0.05em;
   }
 </style>

@@ -6,6 +6,7 @@
     requestPermission,
     sendNotification,
   } from "@tauri-apps/plugin-notification";
+  import { getVersion } from "@tauri-apps/api/app";
   import {
     prayerData,
     config,
@@ -18,6 +19,7 @@
   import Settings from "./lib/Settings.svelte";
 
   let now = $state(new Date());
+  let appVersion = $state("");
   let notifiedPrayers: Set<string> = new Set();
 
   // ─── Fetch prayer times from Rust backend ──────────────────
@@ -85,6 +87,7 @@
 
   // ─── Lifecycle ─────────────────────────────────────────────
   onMount(() => {
+    getVersion().then((v) => (appVersion = v));
     loadConfig().then(() => {
       loadPrayerTimes();
     });
@@ -170,8 +173,11 @@
         <button onclick={loadPrayerTimes}>Retry</button>
       </div>
     {:else if $prayerData}
-      {#each $prayerData.prayers as prayer (prayer.name)}
+      {#each $prayerData.prayers as prayer, i (prayer.name)}
         <PrayerCard {prayer} />
+        {#if i === 2 && appVersion}
+          <div class="version-row">v{appVersion}</div>
+        {/if}
       {/each}
 
       <!-- Sunrise (not a prayer, just info) -->
@@ -359,5 +365,14 @@
   .method-label {
     font-size: 0.75rem;
     color: var(--text-muted);
+  }
+
+  .version-row {
+    text-align: right;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    opacity: 0.5;
+    margin-bottom: 8px;
+    padding-right: 4px;
   }
 </style>
