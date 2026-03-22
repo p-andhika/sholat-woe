@@ -1,6 +1,17 @@
 # Changelog
 
 All notable changes to Sholat Woe will be documented in this file.
+## [1.2.0] - 2026-03-22
+
+### Added
+
+- add caching for prayer times API responses
+
+### Fixed
+
+- ensure CHANGELOG updates are fast-forwardable
+- ensure changelog updates are rebased before push
+
 ## [1.1.0] - 2026-03-20
 
 ### Added
