@@ -33,6 +33,7 @@ sed -i '' "s/^version = \"${CURRENT}\"/version = \"${NEW_VERSION}\"/" src-tauri/
 git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
 git commit -m "chore: bump version to v${NEW_VERSION}"
 git tag "v${NEW_VERSION}"
-git push origin main --tags
+git push origin main
+git push origin "v${NEW_VERSION}"
 
 echo "Released v${NEW_VERSION}"
