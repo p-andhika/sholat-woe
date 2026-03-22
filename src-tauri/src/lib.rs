@@ -36,9 +36,14 @@ fn save_config(app: &tauri::AppHandle, config: &PrayerConfig) {
 }
 
 #[tauri::command]
-async fn get_prayer_times(state: tauri::State<'_, AppState>) -> Result<PrayerTimesResult, String> {
+async fn get_prayer_times(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+) -> Result<PrayerTimesResult, String> {
     let config = state.config.lock().unwrap().clone();
-    fetch_prayer_times(&config).await
+    let app_data_dir = app.path().app_data_dir()
+        .map_err(|e| format!("Failed to access app data directory: {}", e))?;
+    fetch_prayer_times(&config, &app_data_dir).await
 }
 
 #[tauri::command]
@@ -53,7 +58,9 @@ async fn update_config(
     }
     let config = state.config.lock().unwrap().clone();
     save_config(&app, &config);
-    fetch_prayer_times(&config).await
+    let app_data_dir = app.path().app_data_dir()
+        .map_err(|e| format!("Failed to access app data directory: {}", e))?;
+    fetch_prayer_times(&config, &app_data_dir).await
 }
 
 #[tauri::command]
