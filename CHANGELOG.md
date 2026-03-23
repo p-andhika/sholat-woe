@@ -1,6 +1,12 @@
 # Changelog
 
 All notable changes to Sholat Woe will be documented in this file.
+## [1.3.1] - 2026-03-23
+
+### Fixed
+
+- remove redundant condition in prayerData check
+
 ## [1.3.0] - 2026-03-23
 
 ### Added
