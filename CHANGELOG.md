@@ -1,6 +1,16 @@
 # Changelog
 
 All notable changes to Sholat Woe will be documented in this file.
+## [1.3.0] - 2026-03-23
+
+### Added
+
+- persist notified prayers in localStorage
+
+### Fixed
+
+- update git config and push process for release
+
 ## [1.2.0] - 2026-03-22
 
 ### Added
