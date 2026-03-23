@@ -295,7 +295,7 @@
 
 <main class:animate={shouldAnimate}>
   <!-- Top Bar -->
-  {#if $prayerData && $prayerData.time_remaining !== "tomorrow"}
+  {#if $prayerData}
     <div class="top-bar">
       <div class="top-bar-left">
         <div class="clock-top">{formatTime(now)}</div>
