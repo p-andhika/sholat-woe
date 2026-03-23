@@ -32,8 +32,26 @@
 
   let now = $state(new Date());
   let appVersion = $state("");
-  let notifiedPrayers: Set<string> = new Set();
   let shouldAnimate = $state(true);
+
+  function loadNotifiedPrayers(): Set<string> {
+    try {
+      const today = new Date().toDateString();
+      const stored = localStorage.getItem("notifiedPrayers");
+      if (!stored) return new Set();
+      const entries: string[] = JSON.parse(stored);
+      // Only keep entries for today to prune stale data
+      return new Set(entries.filter((k) => k.endsWith(today)));
+    } catch {
+      return new Set();
+    }
+  }
+
+  function saveNotifiedPrayers(set: Set<string>) {
+    localStorage.setItem("notifiedPrayers", JSON.stringify([...set]));
+  }
+
+  let notifiedPrayers: Set<string> = loadNotifiedPrayers();
 
   // Map icon names to Phosphor components
   const iconMap: Record<string, any> = {
@@ -118,6 +136,7 @@
         });
         invoke("play_sound", { soundName: "Ping" });
         notifiedPrayers.add(advKey);
+        saveNotifiedPrayers(notifiedPrayers);
       }
 
       // Exact time notification (trigger within 1-minute window after prayer time)
@@ -129,6 +148,7 @@
         });
         invoke("play_sound", { soundName: "Glass" });
         notifiedPrayers.add(exactKey);
+        saveNotifiedPrayers(notifiedPrayers);
         prayerJustPassed = true;
       }
     }
