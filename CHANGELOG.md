@@ -1,6 +1,13 @@
 # Changelog
 
 All notable changes to Sholat Woe will be documented in this file.
+## [1.3.2] - 2026-03-24
+
+### Added
+
+- add background prayer notifications
+- add app screenshot to README and static folder
+
 ## [1.3.1] - 2026-03-23
 
 ### Fixed
