@@ -22,7 +22,7 @@ A beautiful, minimalist desktop application for Islamic prayer times. Built with
 
 ## 📸 Screenshots
 
-_Screenshots coming soon_
+![Prayer Times App Screenshot](static/screenshots/app-screenshot.png)
 
 ## 🚀 Installation
 
