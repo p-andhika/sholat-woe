@@ -6,7 +6,6 @@
   import {
     isPermissionGranted,
     requestPermission,
-    sendNotification,
   } from "@tauri-apps/plugin-notification";
   import {
     prayerData,
@@ -33,25 +32,6 @@
   let now = $state(new Date());
   let appVersion = $state("");
   let shouldAnimate = $state(true);
-
-  function loadNotifiedPrayers(): Set<string> {
-    try {
-      const today = new Date().toDateString();
-      const stored = localStorage.getItem("notifiedPrayers");
-      if (!stored) return new Set();
-      const entries: string[] = JSON.parse(stored);
-      // Only keep entries for today to prune stale data
-      return new Set(entries.filter((k) => k.endsWith(today)));
-    } catch {
-      return new Set();
-    }
-  }
-
-  function saveNotifiedPrayers(set: Set<string>) {
-    localStorage.setItem("notifiedPrayers", JSON.stringify([...set]));
-  }
-
-  let notifiedPrayers: Set<string> = loadNotifiedPrayers();
 
   // Map icon names to Phosphor components
   const iconMap: Record<string, any> = {
@@ -111,54 +91,6 @@
     return granted;
   }
 
-  function checkAndNotify() {
-    if (!$prayerData) return;
-
-    const nowTime = new Date();
-    const currentMinutes = nowTime.getHours() * 60 + nowTime.getMinutes();
-    let prayerJustPassed = false;
-
-    for (const prayer of $prayerData.prayers) {
-      const [h, m] = prayer.time.split(":").map(Number);
-      const prayerMinutes = h * 60 + m;
-      const diff = prayerMinutes - currentMinutes;
-
-      // Advance notification (trigger within 1-minute window before target)
-      const advKey = `${prayer.name}_adv_${nowTime.toDateString()}`;
-      if (
-        diff <= $config.notify_before_mins &&
-        diff > $config.notify_before_mins - 1 &&
-        !notifiedPrayers.has(advKey)
-      ) {
-        sendNotification({
-          title: `${prayer.name} in ${$config.notify_before_mins} min`,
-          body: `${prayer.name} prayer at ${prayer.time}. Prepare for salah.`,
-        });
-        invoke("play_sound", { soundName: "Ping" });
-        notifiedPrayers.add(advKey);
-        saveNotifiedPrayers(notifiedPrayers);
-      }
-
-      // Exact time notification (trigger within 1-minute window after prayer time)
-      const exactKey = `${prayer.name}_exact_${nowTime.toDateString()}`;
-      if (diff <= 0 && diff > -1 && !notifiedPrayers.has(exactKey)) {
-        sendNotification({
-          title: `${prayer.name} Time`,
-          body: `It's time for ${prayer.name} prayer. Allahu Akbar!`,
-        });
-        invoke("play_sound", { soundName: "Glass" });
-        notifiedPrayers.add(exactKey);
-        saveNotifiedPrayers(notifiedPrayers);
-        prayerJustPassed = true;
-      }
-    }
-
-    // When a prayer time passes, refresh data to update next prayer
-    if (prayerJustPassed) {
-      loadPrayerTimes();
-    }
-  }
-
   onMount(() => {
     getVersion().then((v) => (appVersion = v));
     const unlisten = listen("window-shown", () => {
@@ -181,8 +113,12 @@
       now = new Date();
     }, 1000);
 
-    const notifInterval = setInterval(checkAndNotify, 10_000);
     const refreshInterval = setInterval(loadPrayerTimes, 3_600_000);
+
+    // Listen for refresh event from Rust notification checker
+    const unlistenRefresh = listen("refresh-prayers", () => {
+      loadPrayerTimes();
+    });
 
     // Handle system wake/sleep - refresh data when page becomes visible
     const handleVisibilityChange = () => {
@@ -194,11 +130,11 @@
 
     return () => {
       clearInterval(clockInterval);
-      clearInterval(notifInterval);
       clearInterval(refreshInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       unlisten.then((fn) => fn());
       unlistenSettings.then((fn) => fn());
+      unlistenRefresh.then((fn) => fn());
     };
   });
 
